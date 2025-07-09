@@ -101,19 +101,64 @@ filtered_df = df[
 st.subheader("📃 Produits filtrés")
 st.write(f"{len(filtered_df)} produits trouvés")
 st.dataframe(filtered_df, use_container_width=True)
-#Nikita-----------------------------------------------------
+
 # ====================
 # 📌 KPIs Résumé Global
 # ====================
 st.subheader("🔎 Vue d’ensemble des produits")
 resume = duckdb_amazon1.get_resume_global(conn, NOM_TABLE)
 
+<<<<<<< Updated upstream
+=======
+# ====================
+# 📌 KPIs Résumé Global
+# ====================
+st.subheader("🔎 Vue d’ensemble des produits")
+resume = duckdb_amazon.get_resume_global(conn, NOM_TABLE)
+
+>>>>>>> Stashed changes
 if resume is not None and not resume.empty:
     col1, col2, col3, col4, col5 = st.columns(5)
     col1.metric("📦 Produits", int(resume.NbProduits[0]))
     col2.metric("💸 Prix moyen", f"{resume.PrixMoyen[0]:.2f} $")
     col3.metric("💰 Prix initial", f"{resume.PrixInitialMoyen[0]:.2f} $")
+<<<<<<< Updated upstream
     col4.metric("🏷 Remise moyenne", f"{resume.RemiseMoyenne[0]:.2f} %")
     col5.metric("⭐ Note moyenne", f"{resume.NoteMoyenne[0]:.2f} / 5")
 else:
     st.warning("Aucune donnée résumée trouvée.")
+=======
+    col4.metric("🏷️ Remise moyenne", f"{resume.RemiseMoyenne[0]:.2f} %")
+    col5.metric("⭐ Note moyenne", f"{resume.NoteMoyenne[0]:.2f} / 5")
+else:
+    st.warning("Aucune donnée résumée trouvée.")
+
+# ====================
+# 🔝 Top Produits Notés
+# ====================
+st.subheader("⭐ Top Produits les Mieux Notés")
+top_rated = duckdb_amazon.get_top_rated_products(conn, NOM_TABLE)
+st.dataframe(top_rated, use_container_width=True)
+
+# ====================
+# 💬 Produits les Plus Commentés
+# ====================
+st.subheader("💬 Produits les Plus Évalués")
+most_reviewed = duckdb_amazon.get_most_reviewed_products(conn, NOM_TABLE)
+st.dataframe(most_reviewed, use_container_width=True)
+
+# ====================
+# 📊 Répartition par Catégorie
+# ====================
+st.subheader("📂 Répartition des Produits par Catégorie")
+categorie_df = duckdb_amazon.get_distribution_par_categorie(conn, NOM_TABLE)
+st.bar_chart(categorie_df.set_index("category"))
+
+# ====================
+# ✅ Footer
+# ====================
+st.markdown("---")
+st.caption("Projet Amazon Sales Dashboard - Données produits | Made with ❤️ using Streamlit & DuckDB")
+
+
+>>>>>>> Stashed changes
