@@ -1,0 +1,164 @@
+import streamlit as st 
+import pandas as pd
+import duckdb_amazon1
+import duckdb
+
+FICHIER_CSV = 'data/amazon.csv'
+NOM_TABLE = 'produits'
+
+# 🎨 Interface Streamlit
+st.set_page_config(page_title="Dashboard Produits Amazon", layout="wide")
+
+st.title("📊 Dashboard Produits Amazon")
+st.markdown("Analyse des données produits extraites d’Amazon (catégories, prix, avis, notes…).")
+
+# 📥 Chargement et Nettoyage des Données
+
+# Définir manuellement les noms de colonnes
+colonnes = [
+    "product_id", "product_name", "category", "discounted_price", "actual_price", 
+    "discount_percentage", "rating", "rating_count", "about_product",
+    "user_id", "user_name", "review_id", "review_title", "review_content", 
+    "img_link", "product_link"
+]
+
+# Charger les données
+df = pd.read_csv(FICHIER_CSV, sep='\t', header=None, names=colonnes, encoding='utf-8', engine='python')
+
+# Nettoyage avec pandas AVANT de l'envoyer dans DuckDB
+def clean_price_column(col):
+    return pd.to_numeric(
+        col.astype(str)
+           .str.replace(",", "", regex=False)
+           .str.replace("₹", "", regex=False)
+           .str.extract(r"(\d+\.?\d*)")[0],
+        errors="coerce"
+    ).fillna(0)
+
+df["discounted_price"] = clean_price_column(df["discounted_price"])
+df["actual_price"] = clean_price_column(df["actual_price"])
+
+df["discount_percentage"] = (
+    df["discount_percentage"]
+    .astype(str)
+    .str.replace("%", "", regex=False)
+    .str.extract(r"(\d+\.?\d*)")[0]
+    .astype(float)
+    .fillna(0)
+)
+
+df["rating"] = pd.to_numeric(df["rating"], errors="coerce").fillna(0)
+df["category"] = df["category"].astype(str).fillna("Inconnue")
+
+# Connexion à DuckDB
+conn = duckdb.connect(database=':memory:')
+
+# Enregistrer df comme une vue temporaire
+conn.register("df", df)
+
+# Créer la table DuckDB depuis la vue
+conn.execute(f"CREATE TABLE {NOM_TABLE} AS SELECT * FROM df")
+
+# ====================
+# 🎯 Filtres Interactifs
+# ====================
+
+with st.sidebar:
+    st.header("🎯 Filtres")
+    categories = sorted(df["category"].dropna().unique().tolist())
+    if not categories:
+        st.warning("Aucune catégorie valide trouvée.")
+        selected_categories = []
+    else:
+        selected_categories = st.multiselect("📂 Catégories", categories, default=categories[:3])
+
+    min_rating, max_rating = st.slider("⭐ Note minimum", 0.0, 5.0, (3.0, 5.0), 0.1)
+
+    # Filtrer les prix valides (non nuls)
+    valid_prices = df["discounted_price"].loc[df["discounted_price"] > 0]
+
+    if valid_prices.empty:
+        st.warning("Aucune valeur valide pour le prix réduit")
+        selected_price = (0, 0)
+    else:
+        min_price = float(valid_prices.min())
+        max_price = float(valid_prices.max())
+        if min_price == max_price:
+            selected_price = (min_price, max_price)
+        else:
+            selected_price = st.slider("💰 Prix réduit", min_price, max_price, (min_price, max_price))
+
+# Application des filtres
+filtered_df = df[
+    (df["category"].isin(selected_categories)) &
+    (df["rating"].between(min_rating, max_rating)) &
+    (df["discounted_price"].between(*selected_price))
+]
+
+# ====================
+# 📋 Résultats Filtrés
+# ====================
+st.subheader("📃 Produits filtrés")
+st.write(f"{len(filtered_df)} produits trouvés")
+st.dataframe(filtered_df, use_container_width=True)
+
+# ====================
+# 📌 KPIs Résumé Global
+# ====================
+st.subheader("🔎 Vue d’ensemble des produits")
+resume = duckdb_amazon1.get_resume_global(conn, NOM_TABLE)
+
+<<<<<<< Updated upstream
+=======
+# ====================
+# 📌 KPIs Résumé Global
+# ====================
+st.subheader("🔎 Vue d’ensemble des produits")
+resume = duckdb_amazon.get_resume_global(conn, NOM_TABLE)
+
+>>>>>>> Stashed changes
+if resume is not None and not resume.empty:
+    col1, col2, col3, col4, col5 = st.columns(5)
+    col1.metric("📦 Produits", int(resume.NbProduits[0]))
+    col2.metric("💸 Prix moyen", f"{resume.PrixMoyen[0]:.2f} $")
+    col3.metric("💰 Prix initial", f"{resume.PrixInitialMoyen[0]:.2f} $")
+<<<<<<< Updated upstream
+    col4.metric("🏷 Remise moyenne", f"{resume.RemiseMoyenne[0]:.2f} %")
+    col5.metric("⭐ Note moyenne", f"{resume.NoteMoyenne[0]:.2f} / 5")
+else:
+    st.warning("Aucune donnée résumée trouvée.")
+=======
+    col4.metric("🏷️ Remise moyenne", f"{resume.RemiseMoyenne[0]:.2f} %")
+    col5.metric("⭐ Note moyenne", f"{resume.NoteMoyenne[0]:.2f} / 5")
+else:
+    st.warning("Aucune donnée résumée trouvée.")
+
+# ====================
+# 🔝 Top Produits Notés
+# ====================
+st.subheader("⭐ Top Produits les Mieux Notés")
+top_rated = duckdb_amazon.get_top_rated_products(conn, NOM_TABLE)
+st.dataframe(top_rated, use_container_width=True)
+
+# ====================
+# 💬 Produits les Plus Commentés
+# ====================
+st.subheader("💬 Produits les Plus Évalués")
+most_reviewed = duckdb_amazon.get_most_reviewed_products(conn, NOM_TABLE)
+st.dataframe(most_reviewed, use_container_width=True)
+
+# ====================
+# 📊 Répartition par Catégorie
+# ====================
+st.subheader("📂 Répartition des Produits par Catégorie")
+categorie_df = duckdb_amazon.get_distribution_par_categorie(conn, NOM_TABLE)
+st.bar_chart(categorie_df.set_index("category"))
+
+# ====================
+# ✅ Footer
+# ====================
+st.markdown("---")
+st.caption("Projet Amazon Sales Dashboard - Données produits | Made with ❤️ using Streamlit & DuckDB")
+
+
+>>>>>>> Stashed changes
