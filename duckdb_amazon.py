@@ -13,7 +13,11 @@ st.set_page_config(page_title="Analyse des données Amazon avec DuckDB", layout=
 st.title("📊 Analyse des Données Amazon")
 st.markdown("""
 Bienvenue dans cette application interactive d’analyse des données issues d'Amazon.  
+<<<<<<< Updated upstream
 Grâce à la puissance de *DuckDB* et la simplicité de *Streamlit*, explorez facilement :
+=======
+Grâce à la puissance de **DuckDB** et la simplicité de **Streamlit**, explorez facilement :
+>>>>>>> Stashed changes
 - les produits,
 - les avis clients,
 - les tendances de prix et de notation.
@@ -102,4 +106,16 @@ def get_most_reviewed_products(conn, table_name):
         WHERE rating_count IS NOT NULL
         ORDER BY rating_count DESC
         LIMIT 10
+<<<<<<< Updated upstream
     """).fetchdf()
+=======
+    """).fetchdf()
+
+def get_distribution_par_categorie(conn, table_name):
+    return conn.execute(f"""
+        SELECT category, COUNT(*) AS nb_produits
+        FROM {table_name}
+        GROUP BY category
+        ORDER BY nb_produits DESC
+    """).fetchdf()
+>>>>>>> Stashed changes
