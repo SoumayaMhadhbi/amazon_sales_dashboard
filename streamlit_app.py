@@ -1,6 +1,6 @@
 import streamlit as st 
 import pandas as pd
-import duckdb_amazon
+import duckdb_amazon1
 import duckdb
 
 FICHIER_CSV = 'data/amazon.csv'
@@ -101,4 +101,19 @@ filtered_df = df[
 st.subheader("📃 Produits filtrés")
 st.write(f"{len(filtered_df)} produits trouvés")
 st.dataframe(filtered_df, use_container_width=True)
+#Nikita-----------------------------------------------------
+# ====================
+# 📌 KPIs Résumé Global
+# ====================
+st.subheader("🔎 Vue d’ensemble des produits")
+resume = duckdb_amazon1.get_resume_global(conn, NOM_TABLE)
 
+if resume is not None and not resume.empty:
+    col1, col2, col3, col4, col5 = st.columns(5)
+    col1.metric("📦 Produits", int(resume.NbProduits[0]))
+    col2.metric("💸 Prix moyen", f"{resume.PrixMoyen[0]:.2f} $")
+    col3.metric("💰 Prix initial", f"{resume.PrixInitialMoyen[0]:.2f} $")
+    col4.metric("🏷 Remise moyenne", f"{resume.RemiseMoyenne[0]:.2f} %")
+    col5.metric("⭐ Note moyenne", f"{resume.NoteMoyenne[0]:.2f} / 5")
+else:
+    st.warning("Aucune donnée résumée trouvée.")
