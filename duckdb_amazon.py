@@ -12,7 +12,6 @@ st.set_page_config(page_title="Analyse des données Amazon avec DuckDB", layout=
 # Titre de l'application
 st.title("📊 Analyse des Données Amazon")
 st.markdown("""
-Bienvenue dans cette application interactive d’analyse des données issues d'Amazon.  
 Grâce à la puissance de **DuckDB** et la simplicité de **Streamlit**, explorez facilement :
 - les produits,
 - les avis clients,
